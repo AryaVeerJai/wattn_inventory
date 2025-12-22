@@ -9,7 +9,7 @@ const APIFeatures = require("../utilis/APIFeatures");
 const cloudinary = require("../utilis/cloudinary");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { checkVerification, sendVerification } = require("../middleware/twilio");
+// const { checkVerification, sendVerification } = require("../middleware/twilio");
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Login User  =>  /api/v1/login
@@ -736,53 +736,53 @@ exports.VerifyUser = catchAsyncErrors(async (req, res, next) => {
   res.status(200).send("<b>Verified successfully</b>");
 });
 
-exports.VerifyPhone = catchAsyncErrors(async (req, res, next) => {
-  const { phone, code } = req.body;
+// exports.VerifyPhone = catchAsyncErrors(async (req, res, next) => {
+//   const { phone, code } = req.body;
 
-  console.log(phone, code);
-  const verification = await checkVerification(req, res, "+91" + phone, code);
+//   console.log(phone, code);
+//   const verification = await checkVerification(req, res, "+91" + phone, code);
 
-  console.log(verification);
+//   console.log(verification);
 
-  if (verification == "approved") {
-    let user = await User.updateOne(
-      { phoneNo: phone },
-      {
-        $set: {
-          isVerifiedPhone: true,
-        },
-      }
-    );
+//   if (verification == "approved") {
+//     let user = await User.updateOne(
+//       { phoneNo: phone },
+//       {
+//         $set: {
+//           isVerifiedPhone: true,
+//         },
+//       }
+//     );
 
-    user = await User.findOne(
-      { phoneNo: phone },
-      {
-        role: true,
-        name: true,
-        email: true,
-        phoneNo: true,
-        _id: true,
-        profilePic: true,
-        isVerified: true,
-      }
-    ).select("+password");
+//     user = await User.findOne(
+//       { phoneNo: phone },
+//       {
+//         role: true,
+//         name: true,
+//         email: true,
+//         phoneNo: true,
+//         _id: true,
+//         profilePic: true,
+//         isVerified: true,
+//       }
+//     ).select("+password");
 
-    sendToken(user, 200, res);
-  }
-  return res.status(200).json({
-    success: false,
-  });
-});
+//     sendToken(user, 200, res);
+//   }
+//   return res.status(200).json({
+//     success: false,
+//   });
+// });
 
-exports.SendPhoneOtp = catchAsyncErrors(async (req, res, next) => {
-  const { phone } = req.body;
-  console.log(phone);
-  sendVerification(req, res, "+91" + phone);
+// exports.SendPhoneOtp = catchAsyncErrors(async (req, res, next) => {
+//   const { phone } = req.body;
+//   console.log(phone);
+//   sendVerification(req, res, "+91" + phone);
 
-  return res.status(200).json({
-    success: true,
-  });
-});
+//   return res.status(200).json({
+//     success: true,
+//   });
+// });
 
 //Delete all User ===> /api/v1/admin/user
 exports.deleteBulkUser = catchAsyncErrors(async (req, res, next) => {
