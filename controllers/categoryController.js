@@ -2,7 +2,7 @@ const Category = require("../models/category");
 const ErrorHandler = require("../utilis/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const APIFeatures = require("../utilis/APIFeatures");
-const awsBucket = require("../utilis/uploadfile");
+// const awsBucket = require("../utilis/uploadfile");
 
 
 // Add Category => /api/v1/admin/category
