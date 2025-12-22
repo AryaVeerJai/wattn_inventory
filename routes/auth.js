@@ -22,7 +22,7 @@ const {
   loadGuestUser,
   deleteBulkUser,
   // SendPhoneOtp,
-  VerifyPhone,
+  // VerifyPhone,
   verifyEmail,
   googleLogin
 } = require("../controllers/authControllers");
@@ -74,7 +74,7 @@ router
 
 // router.route("/user/sendotp").post(SendPhoneOtp);
 
-router.route("/user/verifyotp").post(VerifyPhone);
+// router.route("/user/verifyotp").post(VerifyPhone);
 router.route("/user/verifyEmail").post(verifyEmail);
 
 module.exports = router;
