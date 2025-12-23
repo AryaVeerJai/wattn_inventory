@@ -106,6 +106,7 @@ FRONTEND_URL=https://your_frontend_url/
 ### Development mode
 
 ```bash
+npm install --save-dev nodemon
 npm run dev
 ```
 
