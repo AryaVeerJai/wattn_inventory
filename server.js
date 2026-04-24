@@ -27,7 +27,7 @@ let servers = http.Server(app);
 //   res.send('Hello from backend!');
 // });
 
-const server = servers.listen(process.env.PORT || 4000, () => {
+const server = servers.listen(process.env.PORT || 5001, () => {
   console.log(
     `Server started on PORT: ${process.env.PORT} in ${process.env.NODE_ENV} mode.`
   );
