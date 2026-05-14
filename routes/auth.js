@@ -21,8 +21,8 @@ const {
   guestUser,
   loadGuestUser,
   deleteBulkUser,
-  SendPhoneOtp,
-  VerifyPhone,
+  // SendPhoneOtp,
+  // VerifyPhone,
   verifyEmail,
   googleLogin
 } = require("../controllers/authControllers");
@@ -72,9 +72,9 @@ router
   .route("/admin/bulk/user")
   .post(isAuthenticatedUser, authorizeRoles("admin"), deleteBulkUser);
 
-router.route("/user/sendotp").post(SendPhoneOtp);
+// router.route("/user/sendotp").post(SendPhoneOtp);
 
-router.route("/user/verifyotp").post(VerifyPhone);
+// router.route("/user/verifyotp").post(VerifyPhone);
 router.route("/user/verifyEmail").post(verifyEmail);
 
 module.exports = router;
