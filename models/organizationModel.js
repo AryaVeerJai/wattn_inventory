@@ -30,6 +30,9 @@ const organizationSchema = new mongoose.Schema({
   noOfUsers:{
     type: Number,
   },
+  portNumber:{
+    type: Number,
+  },
   email: {
     type: String,
     // required: [true, "Please Enter Email"],

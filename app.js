@@ -29,28 +29,28 @@ app.use(express.json());
 app.use(cookieParser());
 //Import all routes
 const auth = require("./routes/auth");
-const seller = require("./routes/seller");
-const product = require("./routes/product");
-const material = require("./routes/material");
-const category = require("./routes/category");
-const attribute = require("./routes/attribute");
-const cart = require("./routes/cart");
-const wishlist = require("./routes/wishlist");
-const address = require("./routes/address");
-const order = require("./routes/order");
-const coupon = require("./routes/coupon");
-const brands = require("./routes/brands");
-const color = require("./routes/color");
-const review = require("./routes/review");
-const shipping = require("./routes/shipping");
-const home = require("./routes/home");
-const upload = require("./routes/uploadRoute");
+// const seller = require("./routes/seller");
+// const product = require("./routes/product");
+// const material = require("./routes/material");
+// const category = require("./routes/category");
+// const attribute = require("./routes/attribute");
+// const cart = require("./routes/cart");
+// const wishlist = require("./routes/wishlist");
+// const address = require("./routes/address");
+// const order = require("./routes/order");
+// const coupon = require("./routes/coupon");
+// const brands = require("./routes/brands");
+// const color = require("./routes/color");
+// const review = require("./routes/review");
+// const shipping = require("./routes/shipping");
+// const home = require("./routes/home");
+// const upload = require("./routes/uploadRoute");
 
 
-const dynamicRoutes = require('./routes/dynamicRoutes');
-const dynamicPartRoutes = require('./routes/dynamicPartRoutes');
+// const dynamicRoutes = require('./routes/dynamicRoutes');
+// const dynamicPartRoutes = require('./routes/dynamicPartRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
-const userRoutes = require('./routes/userRoutes');
+// const userRoutes = require('./routes/userRoutes');
 
 // const path = require("path");
 
@@ -82,25 +82,25 @@ const fileBrowserMiddleware = [
 ];
 
 app.use("/api/v1", auth);
-app.use("/api/v1", seller);
-app.use("/api/v1", product);
-app.use("/api/v1", material);
-app.use("/api/v1", category);
-app.use("/api/v1", attribute);
-app.use("/api/v1", cart);
-app.use("/api/v1", wishlist);
-app.use("/api/v1", address);
-app.use("/api/v1", order);
-app.use("/api/v1", coupon);
-app.use("/api/v1", brands);
-app.use("/api/v1", color);
-app.use("/api/v1", review);
-app.use("/api/v1", shipping);
-app.use("/api/v1", home);
-app.use("/api/v1", upload);
-app.use('/api/dynamic', dynamicRoutes);
-app.use('/api/dynamicpart', dynamicPartRoutes);
-app.use('/api/users', userRoutes)
+// app.use("/api/v1", seller);
+// app.use("/api/v1", product);
+// app.use("/api/v1", material);
+// app.use("/api/v1", category);
+// app.use("/api/v1", attribute);
+// app.use("/api/v1", cart);
+// app.use("/api/v1", wishlist);
+// app.use("/api/v1", address);
+// app.use("/api/v1", order);
+// app.use("/api/v1", coupon);
+// app.use("/api/v1", brands);
+// app.use("/api/v1", color);
+// app.use("/api/v1", review);
+// app.use("/api/v1", shipping);
+// app.use("/api/v1", home);
+// app.use("/api/v1", upload);
+// app.use('/api/dynamic', dynamicRoutes);
+// app.use('/api/dynamicpart', dynamicPartRoutes);
+// app.use('/api/users', userRoutes)
 
 
 app.use('/api/organizations', organizationRoutes);

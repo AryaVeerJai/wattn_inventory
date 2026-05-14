@@ -1,18 +1,19 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (options) => {
+
   const transport = nodemailer.createTransport({
     service: "gmail",
     host: "smtpout.secureserver.net",
     port: 465,
     auth: {
-      user: process.env.GOOGLE_USER_ID,
-      pass: process.env.GOOGLE_USER_PASS,
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
     },
   });
 
   const message = {
-    from: `Wattn Inventory System <inventory@wattnengineering.com>`,
+    from: `Khado Store <store@khadostore.com>`,
     to: options.email,
     subject: options.subject,
     // text: options.message,

@@ -15,6 +15,8 @@ router.get('/:id', organizationController.getOrganizationById);
 // router.put('/:id/update', organizationController.updateOrganization);
 router.put('/:id/update', organizationController.upload.single('logo'), organizationController.updateOrganization);
 
+router.put('/:id/change-password', organizationController.changePassword);
+
 // Route to delete a dynamic field
 router.delete('/:id/delete', organizationController.deleteOrganization);
 

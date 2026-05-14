@@ -1,4 +1,3 @@
-const DynamicModel = require('../models/dynamicModel');
 const OrganizationModel = require('../models/organizationModel');
 const multer = require('multer');
 const path = require('path');

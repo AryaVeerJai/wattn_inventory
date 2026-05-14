@@ -1,5 +1,7 @@
 const DynamicModel = require('../models/dynamicModel');
 const OrganizationModel = require('../models/organizationModel');
+const createOrganizationStructure = require('../utilis/createOrganizationStructure');
+const bcrypt = require("bcryptjs");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -42,10 +44,58 @@ const upload = multer({
 
 
 // Create a new Organization
-const createOrganization = async (req, res) => {
-  console.log('Request body:', req.body);
-  console.log('Request file:', req.file);
+// const createOrganization = async (req, res) => {
+//   console.log('Request body:', req.body);
+//   console.log('Request file:', req.file);
   
+//   try {
+//     const organizationData = {
+//       name: req.body.name,
+//       email: req.body.email,
+//       gst: req.body.gst,
+//       category: req.body.category,
+//       address: req.body.address,
+//       noOfUsers: parseInt(req.body.noOfUsers),
+//     };
+
+//     // Add logo path if file was uploaded
+//     if (req.file) {
+//       // Store relative path or just filename based on your needs
+//       organizationData.logo = `/uploads/logos/${req.file.filename}`;
+//       // OR if you want full path: organizationData.logo = req.file.path;
+//     }
+
+//     console.log('Organization data to save:', organizationData);
+
+//     const newDynamicDoc = new OrganizationModel(organizationData);
+//     await newDynamicDoc.save();
+
+//     await createOrganizationStructure(newDynamicDoc);
+    
+//     res.status(201).json({
+//       message: 'Organization created successfully',
+//       data: newDynamicDoc,
+//     });
+//   } catch (error) {
+//     console.log('Error:', error.message);
+    
+//     // Delete uploaded file if database save fails
+//     if (req.file && req.file.path) {
+//       fs.unlinkSync(req.file.path);
+//     }
+    
+//     res.status(500).json({ 
+//       message: 'Error creating organization', 
+//       error: error.message 
+//     });
+//   }
+// };
+
+
+const createOrganization = async (req, res) => {
+  console.log("Request body:", req.body);
+  console.log("Request file:", req.file);
+
   try {
     const organizationData = {
       name: req.body.name,
@@ -54,35 +104,35 @@ const createOrganization = async (req, res) => {
       category: req.body.category,
       address: req.body.address,
       noOfUsers: parseInt(req.body.noOfUsers),
+      portNumber: parseInt(req.body.portNumber),
     };
 
-    // Add logo path if file was uploaded
     if (req.file) {
-      // Store relative path or just filename based on your needs
       organizationData.logo = `/uploads/logos/${req.file.filename}`;
-      // OR if you want full path: organizationData.logo = req.file.path;
     }
 
-    console.log('Organization data to save:', organizationData);
-
     const newDynamicDoc = new OrganizationModel(organizationData);
+
     await newDynamicDoc.save();
-    
+
+    // CREATE ORGANIZATION TEMPLATE
+    await createOrganizationStructure(newDynamicDoc);
+
     res.status(201).json({
-      message: 'Organization created successfully',
+      message: "Organization created successfully",
       data: newDynamicDoc,
     });
+
   } catch (error) {
-    console.log('Error:', error.message);
-    
-    // Delete uploaded file if database save fails
+    console.log("Error:", error.message);
+
     if (req.file && req.file.path) {
       fs.unlinkSync(req.file.path);
     }
-    
-    res.status(500).json({ 
-      message: 'Error creating organization', 
-      error: error.message 
+
+    res.status(500).json({
+      message: "Error creating organization",
+      error: error.message,
     });
   }
 };
@@ -211,6 +261,7 @@ const updateOrganization = async (req, res) => {
       category: req.body.category,
       address: req.body.address,
       noOfUsers: req.body.noOfUsers,
+      portNumber: req.body.portNumber,
     };
 
     // If new logo uploaded, update it
@@ -234,6 +285,37 @@ const updateOrganization = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error updating organization', error: error.message });
+  }
+};
+
+const changePassword = async (req, res) => {
+  // console.log(req.body)
+  try {
+    const { newPassword } = req.body;
+    const mongoose = require('mongoose');
+    const organization = await OrganizationModel.findById(req.params.id);
+    // console.log(organization)
+    // console.log(req.params.id)
+
+    if (!organization) {
+      return res.status(404).json({ message: 'Organization not found' });
+    }
+
+    // Verify current password (implement your password verification logic)
+    // const isMatch = await bcrypt.compare(currentPassword, organization.password);
+    // if (!isMatch) {
+    //   return res.status(400).json({ message: 'Current password is incorrect' });
+    // }
+
+    // Hash and update new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    console.log(hashedPassword)
+    organization.password = hashedPassword;
+    await organization.save();
+
+    res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error changing password', error: error.message });
   }
 };
 
@@ -302,6 +384,7 @@ module.exports = {
   createOrganization,
   getOrganizationById,
   updateOrganization,
+  changePassword,
   deleteOrganization,
   deleteMultipleOrganizations,
   getAllOrganizations,
