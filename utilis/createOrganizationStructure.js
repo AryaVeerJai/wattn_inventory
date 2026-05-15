@@ -192,8 +192,10 @@ NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}${orgSlug}?ssl=true&repl
       LOGO: file ? `/assets/logos/${file.filename}` : null
     };
 
+    const frontendConfigPath = path.join(frontendDestination, "config.json");
+
     await fs.writeJson(
-      path.join(frontendDestination, "public/config.json"),
+      frontendConfigPath,
       frontendConfig,
       { spaces: 2 }
     );
