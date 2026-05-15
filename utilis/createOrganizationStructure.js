@@ -207,7 +207,7 @@ pm2 save
 
 echo "Creating nginx config..."
 
-sudo tee /etc/nginx/sites-available/$ORG_NAME > /dev/null <<EOF
+sudo tee /etc/nginx/sites-available/$ORG_NAME.protobiz.ai > /dev/null <<EOF
 server {
     listen 80;
 
