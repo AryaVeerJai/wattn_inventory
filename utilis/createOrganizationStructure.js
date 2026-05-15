@@ -1,111 +1,11 @@
-// const fs = require("fs-extra");
-// const path = require("path");
-
-// const createOrganizationStructure = async (organization) => {
-//   try {
-//     const orgSlug = organization.name
-//       .toLowerCase()
-//       .replace(/\s+/g, "-");
-
-//     // Main organization folder
-//     const orgPath = path.join(
-//       __dirname,
-//       "..",
-//       "..",
-//       "organizations",
-//       orgSlug
-//     );
-
-//     // Template paths
-//     const backendTemplate = path.join(
-//       __dirname,
-//       "..",
-//       "templates",
-//       "backend-template"
-//     );
-
-//     const frontendTemplate = path.join(
-//       __dirname,
-//       "..",
-//       "templates",
-//       "frontend-template"
-//     );
-
-//     // Destination paths
-//     const backendDestination = path.join(orgPath, "backend");
-//     const frontendDestination = path.join(orgPath, "frontend");
-
-//     // Create organization folder
-//     await fs.ensureDir(orgPath);
-
-//     // Copy backend template
-//     await fs.copy(backendTemplate, backendDestination);
-
-//     // Copy frontend template
-//     await fs.copy(frontendTemplate, frontendDestination);
-
-//     // Create organization config file
-//     const configData = {
-//       organizationName: organization.name,
-//       email: organization.email,
-//       category: organization.category,
-//       portNumber: organization.portNumber,
-//       createdAt: new Date(),
-//     };
-
-//     await fs.writeJson(
-//       path.join(orgPath, "organization.json"),
-//       configData,
-//       { spaces: 2 }
-//     );
-
-//     // Create backend .env dynamically
-//     const backendEnv = `
-// PORT=${organization.portNumber}
-// ORG_NAME=${organization.name}
-// ORG_EMAIL=${organization.email}
-// NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}${orgSlug}?ssl=true&replicaSet=atlas-89v3w5-shard-0&authSource=admin&appName=wattninventryadmin
-// `;
-
-//     await fs.writeFile(
-//       path.join(backendDestination, ".env"),
-//       backendEnv
-//     );
-
-//     // Create frontend .env dynamically
-//     const frontendEnv = `
-//   {
-//     "API_URL": "http://localhost:5001/api/v1"
-//   }
-// `;
-
-//     await fs.writeFile(
-//       path.join(frontendDestination, "config.json"),
-//       frontendEnv
-//     );
-
-//     console.log("Organization structure created successfully");
-//   } catch (error) {
-//     console.log("Organization setup error:", error);
-//     throw error;
-//   }
-// };
-
-// module.exports = createOrganizationStructure;
-
-
 const fs = require("fs-extra");
 const path = require("path");
 
 const createOrganizationStructure = async (organization, file) => {
   try {
-    const orgSlug = organization.name
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-
+    const orgSlug = organization.name.toLowerCase().replace(/\s+/g, "-");
     const orgDomain = `${orgSlug}.protobiz.ai`;
 
-    // Root org folder
     const orgPath = path.join(
       __dirname,
       "..",
@@ -114,53 +14,43 @@ const createOrganizationStructure = async (organization, file) => {
       orgSlug
     );
 
-    // Templates
-    const backendTemplate = path.join(
-      __dirname,
-      "..",
-      "templates",
-      "backend-template"
-    );
-
-    const frontendTemplate = path.join(
-      __dirname,
-      "..",
-      "templates",
-      "frontend-template"
-    );
+    const backendTemplate = path.join(__dirname, "..", "templates", "backend-template");
+    const frontendTemplate = path.join(__dirname, "..", "templates", "frontend-template");
 
     const backendDestination = path.join(orgPath, "backend");
     const frontendDestination = path.join(orgPath, "frontend");
 
-    // Create folders
+    // =========================
+    // CREATE STRUCTURE
+    // =========================
     await fs.ensureDir(orgPath);
-
-    // Copy templates
     await fs.copy(backendTemplate, backendDestination);
     await fs.copy(frontendTemplate, frontendDestination);
 
     // =========================
-    // 📦 LOGO HANDLING (NEW)
+    // LOGO
     // =========================
+    let logoPath = null;
+
     if (file) {
       const logoDir = path.join(orgPath, "assets", "logos");
       await fs.ensureDir(logoDir);
 
-      await fs.copy(
-        file.path,
-        path.join(logoDir, file.filename)
-      );
+      logoPath = `/assets/logos/${file.filename}`;
+
+      await fs.copy(file.path, path.join(logoDir, file.filename));
     }
 
     // =========================
-    // 📄 ORGANIZATION CONFIG
+    // ORGANIZATION CONFIG
     // =========================
     const configData = {
       organizationName: organization.name,
       email: organization.email,
       category: organization.category,
       portNumber: organization.portNumber,
-      logo: file ? `/assets/logos/${file.filename}` : null,
+      domain: orgDomain,
+      logo: logoPath,
       createdAt: new Date(),
     };
 
@@ -170,50 +60,40 @@ const createOrganizationStructure = async (organization, file) => {
       { spaces: 2 }
     );
 
+    // =========================
+    // SETUP SCRIPT
+    // =========================
     const setupData = `#!/bin/bash
 
-ORG_NAME=${orgDomain}
+ORG_NAME=${orgSlug}
+ORG_DOMAIN=${orgDomain}
 PORT=${organization.portNumber}
 EMAIL=${organization.email}
-
-if [ -z "$ORG_NAME" ] || [ -z "$PORT" ] || [ -z "$EMAIL" ]; then
-  echo "Usage: ./setup.sh <domain> <port> <email>"
-  exit 1
-fi
 
 BASE_PATH="/var/www/organizations/$ORG_NAME"
 
 echo "======================================="
-echo "Deploying: $ORG_NAME"
+echo "Deploying: $ORG_DOMAIN"
 echo "======================================="
 
-# ============================================
-# Backend Setup
-# ============================================
-
+# =========================
+# BACKEND
+# =========================
 cd $BASE_PATH/backend || exit
-
-echo "Installing backend dependencies..."
 
 npm install
 
-echo "Starting PM2..."
-
+pm2 delete $ORG_NAME || true
 pm2 start server.js --name $ORG_NAME
-
 pm2 save
 
-# ============================================
-# Create NGINX Config (HTTP First)
-# ============================================
-
-echo "Creating nginx config..."
-
-sudo tee /etc/nginx/sites-available/$ORG_NAME > /dev/null <<EOF
+# =========================
+# NGINX CONFIG
+# =========================
+sudo tee /etc/nginx/sites-available/$ORG_DOMAIN > /dev/null <<EOF
 server {
     listen 80;
-
-    server_name $ORG_NAME;
+    server_name $ORG_DOMAIN;
 
     root $BASE_PATH/frontend;
     index index.html;
@@ -235,68 +115,46 @@ server {
 }
 EOF
 
-# ============================================
-# Enable Site
-# ============================================
+# Enable site
+sudo ln -sf /etc/nginx/sites-available/$ORG_DOMAIN /etc/nginx/sites-enabled/
 
-sudo ln -sf /etc/nginx/sites-available/$ORG_NAME /etc/nginx/sites-enabled/
-
-# ============================================
-# Test NGINX
-# ============================================
-
-echo "Testing nginx..."
-
-sudo nginx -t
-
-if [ $? -ne 0 ]; then
-  echo "NGINX configuration failed!"
-  exit 1
-fi
-
-# ============================================
-# Reload NGINX
-# ============================================
+# Test nginx
+sudo nginx -t || { echo "NGINX config failed"; exit 1; }
 
 sudo systemctl reload nginx
 
-# ============================================
-# Generate SSL
-# ============================================
-
-echo "Generating SSL certificate..."
+# =========================
+# SSL (Certbot)
+# =========================
+echo "Generating SSL..."
 
 sudo certbot --nginx \
-  -d $ORG_NAME \
+  -d $ORG_DOMAIN \
   --non-interactive \
   --agree-tos \
   -m $EMAIL \
-  --redirect
-
-# ============================================
-# Reload Again
-# ============================================
+  --redirect || true
 
 sudo systemctl reload nginx
 
 echo "======================================="
 echo "Deployment completed successfully!"
-echo "https://$ORG_NAME"
+echo "https://$ORG_DOMAIN"
 echo "======================================="
-      `;
+`;
 
-      await fs.writeFile(
-        path.join(orgPath, "setup.sh"),
-        setupData.trim(),
-        { mode: 0o755 }
-      );
+    await fs.writeFile(
+      path.join(orgPath, "setup.sh"),
+      setupData.trim(),
+      { mode: 0o755 }
+    );
 
     // =========================
-    // 🖥 BACKEND .ENV
+    // BACKEND ENV
     // =========================
     const backendEnv = `
 PORT=${organization.portNumber}
-ORG_NAME=${organization.name}
+ORG_NAME=${orgSlug}
 ORG_EMAIL=${organization.email}
 NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}${orgSlug}?ssl=true&replicaSet=atlas-89v3w5-shard-0&authSource=admin&appName=wattninventryadmin
 `;
@@ -307,24 +165,21 @@ NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}${orgSlug}?ssl=true&repl
     );
 
     // =========================
-    // 🌐 FRONTEND CONFIG (FIXED)
+    // FRONTEND CONFIG
     // =========================
     const frontendConfig = {
-      API_URL: `http://localhost:${organization.portNumber}/api/v1`,
+      API_URL: `https://${orgDomain}/api/v1`,
       ORG_NAME: organization.name,
-      LOGO: file ? `/assets/logos/${file.filename}` : null
+      LOGO: logoPath,
     };
 
-    const frontendConfigPath = path.join(frontendDestination, "config.json");
-
     await fs.writeJson(
-      frontendConfigPath,
+      path.join(frontendDestination, "config.json"),
       frontendConfig,
       { spaces: 2 }
     );
 
-    console.log("Organization structure created successfully ✔");
-
+    console.log("✔ Organization structure created successfully");
   } catch (error) {
     console.log("Organization setup error:", error);
     throw error;
