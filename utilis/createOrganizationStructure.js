@@ -94,6 +94,8 @@ cd $BASE_PATH/backend || exit
 
 npm install
 
+# Safe PM2 restart
+pm2 stop $ORG_NAME || true
 pm2 delete $ORG_NAME || true
 pm2 start server.js --name $ORG_NAME
 pm2 save
@@ -144,7 +146,9 @@ sudo certbot --nginx \
   --non-interactive \
   --agree-tos \
   -m $EMAIL \
-  --redirect || true
+  --redirect || {
+    echo "SSL generation failed but continuing..."
+}
 
 sudo systemctl reload nginx
 
