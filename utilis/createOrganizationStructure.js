@@ -170,7 +170,7 @@ const createOrganizationStructure = async (organization, file) => {
 
     const setupData = `#!/bin/bash
 
-ORG_NAME=${orgSlug}
+ORG_NAME=${orgSlug}.protobiz.ai
 PORT=${organization.portNumber}
 EMAIL=${organization.email}
 
@@ -207,7 +207,7 @@ pm2 save
 
 echo "Creating nginx config..."
 
-sudo tee /etc/nginx/sites-available/$ORG_NAME.protobiz.ai > /dev/null <<EOF
+sudo tee /etc/nginx/sites-available/$ORG_NAME > /dev/null <<EOF
 server {
     listen 80;
 
