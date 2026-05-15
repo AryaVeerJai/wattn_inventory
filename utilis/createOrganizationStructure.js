@@ -168,6 +168,127 @@ const createOrganizationStructure = async (organization, file) => {
       { spaces: 2 }
     );
 
+    const setupData = `#!/bin/bash
+
+ORG_NAME=${orgSlug}
+PORT=${organization.portNumber}
+EMAIL=${organization.email}
+
+if [ -z "$ORG_NAME" ] || [ -z "$PORT" ] || [ -z "$EMAIL" ]; then
+  echo "Usage: ./setup.sh <domain> <port> <email>"
+  exit 1
+fi
+
+BASE_PATH="/var/www/organizations/$ORG_NAME"
+
+echo "======================================="
+echo "Deploying: $ORG_NAME"
+echo "======================================="
+
+# ============================================
+# Backend Setup
+# ============================================
+
+cd $BASE_PATH/backend || exit
+
+echo "Installing backend dependencies..."
+
+npm install
+
+echo "Starting PM2..."
+
+pm2 start server.js --name $ORG_NAME
+
+pm2 save
+
+# ============================================
+# Create NGINX Config (HTTP First)
+# ============================================
+
+echo "Creating nginx config..."
+
+sudo tee /etc/nginx/sites-available/$ORG_NAME > /dev/null <<EOF
+server {
+    listen 80;
+
+    server_name $ORG_NAME;
+
+    root $BASE_PATH/frontend;
+    index index.html;
+
+    location / {
+        try_files \$uri /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:$PORT;
+        proxy_http_version 1.1;
+
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+
+        proxy_cache_bypass \$http_upgrade;
+    }
+}
+EOF
+
+# ============================================
+# Enable Site
+# ============================================
+
+sudo ln -sf /etc/nginx/sites-available/$ORG_NAME /etc/nginx/sites-enabled/
+
+# ============================================
+# Test NGINX
+# ============================================
+
+echo "Testing nginx..."
+
+sudo nginx -t
+
+if [ $? -ne 0 ]; then
+  echo "NGINX configuration failed!"
+  exit 1
+fi
+
+# ============================================
+# Reload NGINX
+# ============================================
+
+sudo systemctl reload nginx
+
+# ============================================
+# Generate SSL
+# ============================================
+
+echo "Generating SSL certificate..."
+
+sudo certbot --nginx \
+  -d $ORG_NAME \
+  --non-interactive \
+  --agree-tos \
+  -m $EMAIL \
+  --redirect
+
+# ============================================
+# Reload Again
+# ============================================
+
+sudo systemctl reload nginx
+
+echo "======================================="
+echo "Deployment completed successfully!"
+echo "https://$ORG_NAME"
+echo "======================================="
+      `;
+
+      await fs.writeFile(
+        path.join(orgPath, "setup.sh"),
+        setupData.trim(),
+        { mode: 0o755 }
+      );
+
     // =========================
     // 🖥 BACKEND .ENV
     // =========================
