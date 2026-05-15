@@ -14,8 +14,19 @@ const createOrganizationStructure = async (organization, file) => {
       orgSlug
     );
 
-    const backendTemplate = path.join(__dirname, "..", "templates", "backend-template");
-    const frontendTemplate = path.join(__dirname, "..", "templates", "frontend-template");
+    const backendTemplate = path.join(
+      __dirname,
+      "..",
+      "templates",
+      "backend-template"
+    );
+
+    const frontendTemplate = path.join(
+      __dirname,
+      "..",
+      "templates",
+      "frontend-template"
+    );
 
     const backendDestination = path.join(orgPath, "backend");
     const frontendDestination = path.join(orgPath, "frontend");
@@ -28,7 +39,7 @@ const createOrganizationStructure = async (organization, file) => {
     await fs.copy(frontendTemplate, frontendDestination);
 
     // =========================
-    // LOGO
+    // LOGO HANDLING
     // =========================
     let logoPath = null;
 
