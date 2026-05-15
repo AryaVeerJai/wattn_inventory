@@ -129,7 +129,7 @@ server {
 EOF
 
 # Enable site
-sudo ln -sf /etc/nginx/sites-available/$ORG_DOMAIN /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/$ORG_DOMAIN /etc/nginx/sites-enabled/$ORG_DOMAIN
 
 # Test nginx
 sudo nginx -t || { echo "NGINX config failed"; exit 1; }
