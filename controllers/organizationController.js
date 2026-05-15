@@ -116,7 +116,7 @@ const createOrganization = async (req, res) => {
     await newDynamicDoc.save();
 
     // CREATE ORGANIZATION TEMPLATE
-    await createOrganizationStructure(newDynamicDoc);
+    await createOrganizationStructure(newDynamicDoc, req.file);
 
     res.status(201).json({
       message: "Organization created successfully",
