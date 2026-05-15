@@ -103,6 +103,8 @@ const createOrganizationStructure = async (organization, file) => {
       .toLowerCase()
       .replace(/\s+/g, "-");
 
+    const orgDomain = `${orgSlug}.protobiz.ai`;
+
     // Root org folder
     const orgPath = path.join(
       __dirname,
@@ -170,7 +172,7 @@ const createOrganizationStructure = async (organization, file) => {
 
     const setupData = `#!/bin/bash
 
-ORG_NAME=${orgSlug}.protobiz.ai
+ORG_NAME=${orgDomain}
 PORT=${organization.portNumber}
 EMAIL=${organization.email}
 
