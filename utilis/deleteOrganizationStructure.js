@@ -40,3 +40,5 @@ const deleteOrganizationStructure = async (organization) => {
      sudo systemctl reload nginx`
   );
 };
+
+module.exports = deleteOrganizationStructure;

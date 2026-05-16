@@ -1,6 +1,7 @@
 const DynamicModel = require('../models/dynamicModel');
 const OrganizationModel = require('../models/organizationModel');
 const createOrganizationStructure = require('../utilis/createOrganizationStructure');
+const deleteOrganizationStructure = require('../utilis/deleteOrganizationStructure');
 const bcrypt = require("bcryptjs");
 const multer = require('multer');
 const path = require('path');
