@@ -5,6 +5,9 @@ const bcrypt = require("bcryptjs");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+// const fs = require("fs-extra");
+const { exec } = require("child_process");
+const mongoose = require("mongoose");
 // Ensure upload directory exists
 const uploadDir = 'uploads/logos';
 if (!fs.existsSync(uploadDir)) {
@@ -41,56 +44,6 @@ const upload = multer({
   },
   fileFilter: fileFilter
 });
-
-
-// Create a new Organization
-// const createOrganization = async (req, res) => {
-//   console.log('Request body:', req.body);
-//   console.log('Request file:', req.file);
-  
-//   try {
-//     const organizationData = {
-//       name: req.body.name,
-//       email: req.body.email,
-//       gst: req.body.gst,
-//       category: req.body.category,
-//       address: req.body.address,
-//       noOfUsers: parseInt(req.body.noOfUsers),
-//     };
-
-//     // Add logo path if file was uploaded
-//     if (req.file) {
-//       // Store relative path or just filename based on your needs
-//       organizationData.logo = `/uploads/logos/${req.file.filename}`;
-//       // OR if you want full path: organizationData.logo = req.file.path;
-//     }
-
-//     console.log('Organization data to save:', organizationData);
-
-//     const newDynamicDoc = new OrganizationModel(organizationData);
-//     await newDynamicDoc.save();
-
-//     await createOrganizationStructure(newDynamicDoc);
-    
-//     res.status(201).json({
-//       message: 'Organization created successfully',
-//       data: newDynamicDoc,
-//     });
-//   } catch (error) {
-//     console.log('Error:', error.message);
-    
-//     // Delete uploaded file if database save fails
-//     if (req.file && req.file.path) {
-//       fs.unlinkSync(req.file.path);
-//     }
-    
-//     res.status(500).json({ 
-//       message: 'Error creating organization', 
-//       error: error.message 
-//     });
-//   }
-// };
-
 
 const createOrganization = async (req, res) => {
   console.log("Request body:", req.body);
@@ -137,53 +90,6 @@ const createOrganization = async (req, res) => {
   }
 };
 
-// Create a new Organization
-// const createOrganization = async (req, res) => {
-//   console.log(req.body)
-//   try {
-//     const organizationData = {
-//       name: req.body.name,
-//       gst: req.body.gst,
-//       category: req.body.category,
-//       address: req.body.address,
-//       noOfUsers: req.body.noOfUsers,
-//     };
-
-//     // If file was uploaded, add the logo path
-//     if (req.file) {
-//       organizationData.logo = `/uploads/logos/${req.file.filename}`;
-//     }
-
-//     const newDynamicDoc = new OrganizationModel(organizationData);
-//     await newDynamicDoc.save();
-    
-//     res.status(201).json({
-//       message: 'Organization created successfully',
-//       data: newDynamicDoc,
-//     });
-//   } catch (error) {
-//     console.log(error.message);
-//     res.status(500).json({ message: 'Error creating document', error: error.message });
-//   }
-// };
-
-// Create a new Organization
-// const createOrganization = async (req, res) => {
-//   console.log(req.body)
-//   try {
-//     // console.log(req.body)
-//     const newDynamicDoc = new OrganizationModel(req.body);
-//     await newDynamicDoc.save();
-//     res.status(201).json({
-//       message: 'Organization created successfully',
-//       data: newDynamicDoc,
-//     });
-//   } catch (error) {
-//     console.log(error.message)
-//     res.status(500).json({ message: 'Error creating document', error: error.message });
-//   }
-// };
-
 // Get a Organization by ID
 const getOrganizationById = async (req, res) => {
   try {
@@ -196,59 +102,6 @@ const getOrganizationById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching document', error: error.message });
   }
 };
-
-// // Update a dynamic field
-// const updateDynamicField = async (req, res) => {
-//   try {
-//     // const { fieldName, name, value, type } = req.body;
-//     const { fieldName, name, type, enabled } = req.body;
-//     const updateObj = { [`${fieldName}.name`]: name, [`${fieldName}.type`]: type, [`${fieldName}.enabled`]: enabled};
-
-//     const updatedDoc = await DynamicModel.findByIdAndUpdate(req.params.id, { $set: updateObj }, { new: true });
-//     if (!updatedDoc) {
-//       return res.status(404).json({ message: 'Document not found' });
-//     }
-//     res.status(200).json({
-//       message: `Field '${fieldName}' updated successfully`,
-//       data: updatedDoc,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error updating field', error: error.message });
-//   }
-// };
-
-// Update all dynamic fields
-// const updateOrganization = async (req, res) => {
-//   try {
-//     const { formData } = req.body; // Receive the entire formData object
-
-//     // Construct the update object dynamically
-//     const updateObj = {};
-//     for (const [fieldName, fieldData] of Object.entries(formData)) {
-//       updateObj[`${fieldName}.name`] = fieldData.name;
-//       updateObj[`${fieldName}.type`] = fieldData.type;
-//       updateObj[`${fieldName}.enabled`] = fieldData.enabled;
-//     }
-
-//     // Update the document
-//     const updatedDoc = await OrganizationModel.findByIdAndUpdate(
-//       req.params.id,
-//       { $set: updateObj },
-//       { new: true }
-//     );
-
-//     if (!updatedDoc) {
-//       return res.status(404).json({ message: 'Document not found' });
-//     }
-
-//     res.status(200).json({
-//       message: 'All fields updated successfully',
-//       data: updatedDoc,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error updating fields', error: error.message });
-//   }
-// };
 
 // Update organization
 const updateOrganization = async (req, res) => {
@@ -346,28 +199,69 @@ const deleteOrganization = async (req, res) => {
   }
 };
 
+// const deleteMultipleOrganizations = async (req, res, next) => {
+//   console.log(req.body)
+//   const { organizationIds } = req.body;
+
+//   if (!organizationIds || organizationIds.length === 0) {
+//     return next(new ErrorHandler("No Organization IDs provided", 400));
+//   }
+
+//   // Check if all IDs exist
+//   const organizations = await OrganizationModel.find({ _id: { $in: organizationIds } });
+
+//   if (organizations.length !== organizationIds.length) {
+//     return next(new ErrorHandler("One or more organizations not found", 404));
+//   }
+
+//   // Delete all organizations
+//   await OrganizationModel.deleteMany({ _id: { $in: organizationIds } });
+
+//   res.status(200).json({
+//     success: true,
+//     message: `${organizationIds.length} Organization deleted successfully`,
+//   });
+// };
+
 const deleteMultipleOrganizations = async (req, res, next) => {
-  console.log(req.body)
-  const { organizationIds } = req.body;
+  try {
+    const { organizationIds } = req.body;
 
-  if (!organizationIds || organizationIds.length === 0) {
-    return next(new ErrorHandler("No Organization IDs provided", 400));
+    if (!organizationIds || organizationIds.length === 0) {
+      return next(new ErrorHandler("No Organization IDs provided", 400));
+    }
+
+    // Get orgs
+    const organizations = await OrganizationModel.find({
+      _id: { $in: organizationIds },
+    });
+
+    if (organizations.length !== organizationIds.length) {
+      return next(new ErrorHandler("One or more organizations not found", 404));
+    }
+
+    // =========================
+    // CLEAN INFRASTRUCTURE FIRST
+    // =========================
+    for (const org of organizations) {
+      await deleteOrganizationStructure(org);
+    }
+
+    // =========================
+    // DELETE FROM MAIN DB
+    // =========================
+    await OrganizationModel.deleteMany({
+      _id: { $in: organizationIds },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `${organizationIds.length} Organizations deleted successfully`,
+    });
+
+  } catch (error) {
+    next(error);
   }
-
-  // Check if all IDs exist
-  const organizations = await OrganizationModel.find({ _id: { $in: organizationIds } });
-
-  if (organizations.length !== organizationIds.length) {
-    return next(new ErrorHandler("One or more organizations not found", 404));
-  }
-
-  // Delete all organizations
-  await OrganizationModel.deleteMany({ _id: { $in: organizationIds } });
-
-  res.status(200).json({
-    success: true,
-    message: `${organizationIds.length} Organization deleted successfully`,
-  });
 };
 
 // Get all Organizations
