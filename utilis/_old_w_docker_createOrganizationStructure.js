@@ -1,15 +1,13 @@
 const fs = require("fs-extra");
 const path = require("path");
 const { exec } = require("child_process");
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-
-// IMPORTANT: import your User schema (same file used in org DB)
-const userSchema = require("../models/User");
 
 const createOrganizationStructure = async (organization, file) => {
   try {
-    const orgSlug = organization.name.toLowerCase().replace(/\s+/g, "-");
+    const orgSlug = organization.name
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
     const orgDomain = `${orgSlug}.protobiz.ai`;
 
     const orgPath = path.join(
@@ -59,7 +57,7 @@ const createOrganizationStructure = async (organization, file) => {
     }
 
     // =========================
-    // 3. ORG CONFIG
+    // 3. CONFIG FILE
     // =========================
     await fs.writeJson(
       path.join(orgPath, "organization.json"),
@@ -76,7 +74,7 @@ const createOrganizationStructure = async (organization, file) => {
     );
 
     // =========================
-    // 4. BACKEND ENV (IMPORTANT)
+    // 4. BACKEND ENV
     // =========================
     const backendEnv = `
 PORT=5000
@@ -84,7 +82,7 @@ ORG_NAME=${orgSlug}
 ORG_EMAIL=${organization.email}
 JWT_SECRET=${organization.name.split(" ")[0]}SecretKey
 JWT_EXPIRES_TIME=7d
-NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}
+NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}${orgSlug}
 `;
 
     await fs.writeFile(
@@ -106,33 +104,7 @@ NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}
     );
 
     // =========================
-    // 6. CONNECT TO ORG DATABASE
-    // =========================
-    const orgDbUri = `${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}`;
-
-    const orgConnection = await mongoose.createConnection(orgDbUri);
-
-    const User = orgConnection.model("User", userSchema);
-
-    // =========================
-    // 7. CREATE FIRST OWNER USER
-    // =========================
-    const tempPassword = "Admin@123"; // you can generate random later
-
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-    await User.create({
-      name: organization.name + " Admin",
-      email: organization.email,
-      password: hashedPassword,
-      role: "OWNER",
-      isVerified: true,
-    });
-
-    console.log("✔ First org user created");
-
-    // =========================
-    // 8. START DOCKER CONTAINER
+    // 6. DOCKER DEPLOYMENT (IMPORTANT PART)
     // =========================
     const containerName = `${orgSlug}-backend`;
 
@@ -147,11 +119,12 @@ docker run -d \
   org-backend:latest
 `;
 
-    exec(dockerCmd, (err) => {
+    exec(dockerCmd, (err, stdout, stderr) => {
       if (err) {
         console.error("❌ Docker error:", err.message);
         return;
       }
+
       console.log("✅ Docker container started:", containerName);
     });
 
