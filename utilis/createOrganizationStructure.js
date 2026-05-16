@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 // IMPORTANT: import your User schema (same file used in org DB)
-const userSchema = require("../models/user");
+// const userSchema = require("../models/user");
+const userSchema = require("../models/user.schema");
 
 const createOrganizationStructure = async (organization, file) => {
   try {
