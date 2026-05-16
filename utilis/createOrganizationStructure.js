@@ -4,9 +4,8 @@ const { exec } = require("child_process");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-// IMPORTANT: import your User schema (same file used in org DB)
-// const userSchema = require("../models/user");
-const userSchema = require("../models/user.schema");
+// IMPORTANT: use schema version (NOT model)
+const { userSchema } = require("../models/user.schema");
 
 const createOrganizationStructure = async (organization, file) => {
   try {
@@ -39,7 +38,7 @@ const createOrganizationStructure = async (organization, file) => {
     const frontendDestination = path.join(orgPath, "frontend");
 
     // =========================
-    // 1. CREATE FOLDERS
+    // 1. CREATE FOLDER STRUCTURE
     // =========================
     await fs.ensureDir(orgPath);
     await fs.copy(backendTemplate, backendDestination);
@@ -60,7 +59,7 @@ const createOrganizationStructure = async (organization, file) => {
     }
 
     // =========================
-    // 3. ORG CONFIG
+    // 3. ORGANIZATION CONFIG
     // =========================
     await fs.writeJson(
       path.join(orgPath, "organization.json"),
@@ -77,7 +76,7 @@ const createOrganizationStructure = async (organization, file) => {
     );
 
     // =========================
-    // 4. BACKEND ENV (IMPORTANT)
+    // 4. BACKEND ENV
     // =========================
     const backendEnv = `
 PORT=5000
@@ -107,20 +106,37 @@ NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}
     );
 
     // =========================
-    // 6. CONNECT TO ORG DATABASE
+    // 6. START DOCKER CONTAINER
+    // =========================
+    const containerName = `${orgSlug}-backend`;
+
+    exec(`
+docker stop ${containerName} || true &&
+docker rm ${containerName} || true &&
+docker run -d \
+  --name ${containerName} \
+  --restart always \
+  -p ${organization.portNumber}:5000 \
+  --env-file ${orgPath}/backend/.env \
+  org-backend:latest
+`, (err) => {
+      if (err) {
+        console.log("❌ Docker error:", err.message);
+      } else {
+        console.log("✔ Docker started:", containerName);
+      }
+    });
+
+    // =========================
+    // 7. CREATE FIRST USER (ORG DB)
     // =========================
     const orgDbUri = `${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}`;
 
-    const orgConnection = await mongoose.createConnection(orgDbUri);
+    const orgConnection = mongoose.createConnection(orgDbUri);
 
     const User = orgConnection.model("User", userSchema);
 
-    // =========================
-    // 7. CREATE FIRST OWNER USER
-    // =========================
-    const tempPassword = "Admin@123"; // you can generate random later
-
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    const hashedPassword = await bcrypt.hash("Admin@123", 10);
 
     await User.create({
       name: organization.name + " Admin",
@@ -133,32 +149,42 @@ NEW_DB_LOCAL_URI=${process.env.CREATER_ORGANIZATION_URI}/${orgSlug}
     console.log("✔ First org user created");
 
     // =========================
-    // 8. START DOCKER CONTAINER
+    // 8. NGINX AUTO CONFIG (FIXED CRITICAL PART)
     // =========================
-    const containerName = `${orgSlug}-backend`;
+    const nginxConfig = `
+server {
+    listen 80;
+    server_name ${orgDomain};
 
-    const dockerCmd = `
-docker stop ${containerName} || true &&
-docker rm ${containerName} || true &&
-docker run -d \
-  --name ${containerName} \
-  --restart always \
-  -p ${organization.portNumber}:5000 \
-  --env-file ${orgPath}/backend/.env \
-  org-backend:latest
+    location / {
+        proxy_pass http://localhost:${organization.portNumber};
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
 `;
 
-    exec(dockerCmd, (err) => {
+    const nginxPath = `/etc/nginx/sites-available/${orgDomain}`;
+
+    await fs.writeFile(nginxPath, nginxConfig);
+
+    exec(`
+ln -sf /etc/nginx/sites-available/${orgDomain} /etc/nginx/sites-enabled/${orgDomain} &&
+nginx -t && systemctl reload nginx
+`, (err) => {
       if (err) {
-        console.error("❌ Docker error:", err.message);
-        return;
+        console.log("❌ Nginx error:", err.message);
+      } else {
+        console.log("✔ Nginx enabled:", orgDomain);
       }
-      console.log("✅ Docker container started:", containerName);
     });
 
-    console.log("✔ Organization structure created successfully");
+    console.log("🎉 Organization setup completed successfully");
   } catch (error) {
-    console.log("Organization setup error:", error);
+    console.log("❌ Organization setup error:", error);
     throw error;
   }
 };
