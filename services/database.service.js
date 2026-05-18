@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const BCRYPT_ROUNDS = 12;
 
 // user.schema.js does: module.exports = userSchema  (the Schema object directly)
-const userSchema = require("../../models/user.schema");
+const userSchema = require("../models/user.schema");
 
 /**
  * Open a dedicated Mongoose connection to the org's Atlas database,
