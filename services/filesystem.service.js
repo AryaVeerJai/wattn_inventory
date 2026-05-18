@@ -118,22 +118,53 @@ async function writeFrontendConfig(slug, { name, orgDomain, logoPath, frontendDe
 
 /**
  * Write the nginx virtual-host config file.
- * Only the slug-derived domain and port (already validated integers) are
- * interpolated here — no raw user strings.
+ *
+ * Pattern matches your existing server setup:
+ *   - /        → serves the org's built React frontend as static files
+ *   - /api/    → proxies to the org's Docker backend container
+ *   - /uploads/ → serves uploaded files (logos, etc.) as static files
+ *
+ * The frontend build must be deployed to:
+ *   /var/www/organizations/<slug>/frontend/build
+ *
+ * Only slug-derived values and the validated port integer are interpolated —
+ * no raw user strings ever reach this config.
  */
 async function writeNginxConfig(slug, { orgDomain, portNumber }) {
   const { nginxAvailable } = orgPaths(slug);
+
+  const frontendBuildPath = `/var/www/organizations/${slug}/frontend/build`;
+
   const config = `server {
     listen 80;
     server_name ${orgDomain};
 
+    # Serve the org's React frontend as static files
+    root ${frontendBuildPath};
+    index index.html;
+
+    # React router — all non-asset paths fall back to index.html
     location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API — proxied to the org's Docker container
+    location /api/ {
         proxy_pass http://localhost:${portNumber};
         proxy_http_version 1.1;
-
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Uploaded files (logos, attachments) served directly
+    location /uploads/ {
+        alias /var/www/organizations/${slug}/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 }
 `;
