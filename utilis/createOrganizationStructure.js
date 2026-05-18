@@ -2,6 +2,7 @@
 
 const { validateOrgInput } = require("./validate");
 const { generateTempPassword, generateJwtSecret } = require("./credentials");
+const { buildOrgDbUri } = require("./uri");
 
 const fsSvc = require("../services/filesystem.service");
 const dbSvc = require("../services/database.service");
@@ -33,11 +34,6 @@ const nginxSvc = require("../services/nginx.service");
  * IMPORTANT — tempPassword must be emailed to the admin and never logged.
  */
 async function createOrganizationStructure(orgDoc, file = null) {
-  // ─── Guard ───────────────────────────────────────────────────────────────────
-  if (!process.env.CREATER_ORGANIZATION_URI) {
-    throw new Error("Environment variable CREATER_ORGANIZATION_URI is not set");
-  }
-
   // ─── 1. Validate ────────────────────────────────────────────────────────────
   // validateOrgInput handles both Mongoose documents and plain objects.
   // Slug is derived from name + last-6 chars of _id to guarantee uniqueness.
@@ -45,7 +41,9 @@ async function createOrganizationStructure(orgDoc, file = null) {
     validateOrgInput(orgDoc);
 
   const orgDomain = `${slug}.protobiz.ai`;
-  const dbUri = `${process.env.CREATER_ORGANIZATION_URI}/${slug}`;
+  // buildOrgDbUri splices the slug into the Atlas URI correctly,
+  // preserving the query string (?ssl=true&replicaSet=...&authSource=admin&appName=...)
+  const dbUri = buildOrgDbUri(slug);
 
   // Track what has been created so rollback knows what to undo
   let filesCreated = false;
