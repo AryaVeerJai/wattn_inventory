@@ -3,7 +3,7 @@
 const fs = require("fs-extra");
 const path = require("path");
 
-const ORGS_ROOT = path.resolve(__dirname, "..", "..", "organizations");
+const ORGS_ROOT = "/var/www/organizations";
 const BACKEND_TEMPLATE = path.resolve(__dirname, "..", "templates", "backend-template");
 const FRONTEND_TEMPLATE = path.resolve(__dirname, "..", "templates", "frontend-template");
 
@@ -124,8 +124,9 @@ async function writeFrontendConfig(slug, { name, orgDomain, logoPath, frontendDe
  *   - /api/    → proxies to the org's Docker backend container
  *   - /uploads/ → serves uploaded files (logos, etc.) as static files
  *
- * The frontend build must be deployed to:
- *   /var/www/organizations/<slug>/frontend/build
+ * Frontend is served from:  /var/www/organizations/<slug>/frontend/
+ * Assets are served from:   /var/www/organizations/<slug>/assets/
+ * API is proxied to:        http://localhost:<portNumber>
  *
  * Only slug-derived values and the validated port integer are interpolated —
  * no raw user strings ever reach this config.
@@ -133,14 +134,14 @@ async function writeFrontendConfig(slug, { name, orgDomain, logoPath, frontendDe
 async function writeNginxConfig(slug, { orgDomain, portNumber }) {
   const { nginxAvailable } = orgPaths(slug);
 
-  const frontendBuildPath = `/var/www/organizations/${slug}/frontend/build`;
+  const frontendPath = `/var/www/organizations/${slug}/frontend`;
 
   const config = `server {
     listen 80;
     server_name ${orgDomain};
 
-    # Serve the org's React frontend as static files
-    root ${frontendBuildPath};
+    # Serve the org's frontend static files
+    root ${frontendPath};
     index index.html;
 
     # React router — all non-asset paths fall back to index.html
@@ -160,9 +161,9 @@ async function writeNginxConfig(slug, { orgDomain, portNumber }) {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Uploaded files (logos, attachments) served directly
-    location /uploads/ {
-        alias /var/www/organizations/${slug}/uploads/;
+    # Uploaded assets (logos, etc.) served directly
+    location /assets/ {
+        alias /var/www/organizations/${slug}/assets/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
