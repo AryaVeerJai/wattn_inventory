@@ -1,6 +1,6 @@
 const DynamicModel = require('../models/dynamicModel');
 const OrganizationModel = require('../models/organizationModel');
-const { createOrganizationStructure, deleteOrganizationStructure } = require("./createOrganizationStructure");
+const { createOrganizationStructure, deleteOrganizationStructure } = require("../utilis/createOrganizationStructure");
 // const createOrganizationStructure = require('../utilis/createOrganizationStructure');
 // const deleteOrganizationStructure = require('../utilis/createOrganizationStructure');
 const bcrypt = require("bcryptjs");
