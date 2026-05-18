@@ -118,7 +118,7 @@ async function deleteOrganizationStructure(orgDoc) {
 
   // Re-derive the slug the same way createOrganizationStructure did.
   // We use the _id suffix so the slug always matches what was created.
-  const { validateOrgInput } = require("./utils/validate");
+  const { validateOrgInput } = require("./validate");
   let slug;
   try {
     ({ slug } = validateOrgInput(orgDoc));
