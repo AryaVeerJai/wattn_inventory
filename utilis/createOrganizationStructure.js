@@ -40,6 +40,9 @@ async function createOrganizationStructure(orgDoc, file = null) {
   const { name, email, category, portNumber, slug, gst, address, noOfUsers } =
     validateOrgInput(orgDoc);
 
+  // Reject immediately if this slug is already provisioned on disk
+  await fsSvc.assertNoDuplicate(slug);
+
   const orgDomain = `${slug}.protobiz.ai`;
   // buildOrgDbUri splices the slug into the Atlas URI correctly,
   // preserving the query string (?ssl=true&replicaSet=...&authSource=admin&appName=...)
@@ -117,7 +120,6 @@ async function deleteOrganizationStructure(orgDoc) {
   const { name } = doc;
 
   // Re-derive the slug the same way createOrganizationStructure did.
-  // We use the _id suffix so the slug always matches what was created.
   const { validateOrgInput } = require("./validate");
   let slug;
   try {
@@ -128,8 +130,6 @@ async function deleteOrganizationStructure(orgDoc) {
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
-    const idSuffix = doc._id ? String(doc._id).slice(-6) : "";
-    if (idSuffix) slug = `${slug}-${idSuffix}`;
   }
 
   console.log(`[org-delete] Starting teardown for slug "${slug}"…`);

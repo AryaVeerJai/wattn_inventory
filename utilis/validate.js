@@ -35,9 +35,7 @@ function validateOrgInput(org) {
   // Slug: lowercase, spaces → hyphens, strip everything else.
   // We append the first 6 chars of the MongoDB _id to guarantee uniqueness
   // even when two org names collapse to the same slug (e.g. "Acme" vs "ACME").
-  const baseSlug = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-  const idSuffix = _id ? String(_id).slice(-6) : "";
-  const slug = idSuffix ? `${baseSlug}-${idSuffix}` : baseSlug;
+  const slug = name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
   if (!SLUG_RE.test(slug)) {
     throw new Error(`Derived slug "${slug}" is invalid — check the organization name`);
