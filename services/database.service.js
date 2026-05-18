@@ -2,50 +2,50 @@
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const { userSchema } = require("../models/user.schema");
 
-const BCRYPT_ROUNDS = 12; // Slightly stronger than 10; still fast enough
+const BCRYPT_ROUNDS = 12;
+
+// user.schema.js does: module.exports = userSchema  (the Schema object directly)
+const userSchema = require("../../models/user.schema");
 
 /**
- * Create a new Mongoose connection to the org-specific database,
- * create the first admin user with a securely generated password,
- * then cleanly close the connection.
+ * Open a dedicated Mongoose connection to the org's Atlas database,
+ * create the first admin user, then close the connection.
  *
- * @param {string} dbUri    - Full MongoDB URI for this org's database
- * @param {object} params
- * @param {string} params.name         - Organization display name
- * @param {string} params.email        - Admin email address
- * @param {string} params.tempPassword - Caller-generated random password
- * @returns {{ userId: string }} - The created user's ID (for audit logging)
+ * Uses createConnection() — not the global mongoose instance — so this
+ * runs entirely against the org's own database without touching the main DB.
+ *
+ * Key: orgConnection.model() must be used (not mongoose.model()) when
+ * registering schemas on a specific connection.
  */
 async function createFirstOrgUser(dbUri, { name, email, tempPassword }) {
   let orgConnection;
 
   try {
     orgConnection = mongoose.createConnection(dbUri, {
-      serverSelectionTimeoutMS: 10_000,
-      connectTimeoutMS: 10_000,
+      serverSelectionTimeoutMS: 15_000,
+      connectTimeoutMS:         15_000,
     });
 
-    // Wait for the connection to be ready before operating on it
     await orgConnection.asPromise();
 
+    // Register schema on THIS connection — not on the global mongoose
     const User = orgConnection.model("User", userSchema);
 
-    const hashedPassword = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
-
+    // user.schema.js has a pre("save") bcrypt hook, so pass the plain password
+    // and let the hook hash it — same as the rest of your app does
     const user = await User.create({
-      name: `${name} Admin`,
+      name:       `${name} Admin`,
       email,
-      password: hashedPassword,
-      role: "OWNER",
+      password:   tempPassword,   // hashed by pre("save") hook in user.schema.js
+      role:       "OWNER",
       isVerified: true,
-      mustChangePassword: true, // Flag so UI forces a password change on first login
     });
 
+    console.log(`[org-setup] ✔ Admin user created (id: ${user._id})`);
     return { userId: user._id.toString() };
+
   } finally {
-    // Always close the connection — even if an error was thrown above
     if (orgConnection) {
       await orgConnection.close().catch(() => {});
     }
