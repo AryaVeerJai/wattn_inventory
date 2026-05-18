@@ -57,7 +57,7 @@ async function handleLogo(slug, file) {
   await fs.ensureDir(assetsDir);
   const dest = path.join(assetsDir, file.filename);
   await fs.copy(file.path, dest);
-  return `/assets/logos/${file.filename}`;
+  return `/logos/${file.filename}`;
 }
 
 /**
@@ -161,9 +161,9 @@ async function writeNginxConfig(slug, { orgDomain, portNumber }) {
         proxy_cache_bypass $http_upgrade;
     }
 
-    # Uploaded assets (logos, etc.) served directly
-    location /assets/ {
-        alias /var/www/organizations/${slug}/assets/;
+    # Org logos served directly (avoids conflict with React /assets/ folder)
+    location /logos/ {
+        alias /var/www/organizations/${slug}/assets/logos/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
