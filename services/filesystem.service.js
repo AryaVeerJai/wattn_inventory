@@ -4,8 +4,8 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const ORGS_ROOT = path.resolve(__dirname, "..", "..", "..", "organizations");
-const BACKEND_TEMPLATE = path.resolve(__dirname, "..", "..", "templates", "backend-template");
-const FRONTEND_TEMPLATE = path.resolve(__dirname, "..", "..", "templates", "frontend-template");
+const BACKEND_TEMPLATE = path.resolve(__dirname, "..", "templates", "backend-template");
+const FRONTEND_TEMPLATE = path.resolve(__dirname, "..", "templates", "frontend-template");
 
 /**
  * Resolve all relevant paths for an org slug.
